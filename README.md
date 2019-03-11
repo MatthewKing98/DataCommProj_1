@@ -4,6 +4,7 @@ You are to complete the implementation and ensure proper functionality. The plac
 Note: You are not mandated to use the implementation code provided and can write your own proxy server and server from scratch as needed.
 
 What to Hand in
+
 All code must be turned in through a version control system (e.g github). Provide a link to your repository in classroom/blackboard.
 
 Requirement Summary
