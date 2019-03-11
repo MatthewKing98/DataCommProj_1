@@ -1,5 +1,5 @@
 # DataCommProj_1
-ou are to complete the implementation and ensure proper functionality. The places where you need to fill in code are marked with #TODO. Each place may require one or more lines of code. 
+You are to complete the implementation and ensure proper functionality. The places where you need to fill in code are marked with #TODO. Each place may require one or more lines of code. 
 
 Note: You are not mandated to use the implementation code provided and can write your own proxy server and server from scratch as needed.
 
