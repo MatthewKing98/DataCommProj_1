@@ -24,7 +24,7 @@ import time
 # will slow down transmission so you can keep up. We expect that most commands
 # will be shorter than this.
 COMMAND_BUFFER_SIZE = 256
-
+HOST = '127.0.0.1'  # localhost address
 
 def CreateServerSocket(port):
     """Creates a socket that listens on a specified port.
@@ -40,9 +40,21 @@ def CreateServerSocket(port):
     # TODO: Implement CreateServerSocket Function
     #############################################
 
+    server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_sock.bind((HOST,port))
+    return server_sock
+
+
+
 
 def ConnectClientToServer(server_sock):
-    """Connects client to server."""
+    """Connects client to server.
+
+
+    Returns:
+      A new socket representing the client connection, as well as a tuple holding
+      the address of the client
+    """
 
     # Wait until a client connects and then get a socket that connects to the
     # client.
@@ -51,6 +63,9 @@ def ConnectClientToServer(server_sock):
     #############################################
     # TODO: Implement CreateClientSocket Function
     #############################################
+
+    server_sock.listen()
+    return server_sock.accept()
 
 
 def CreateClientSocket(server_addr, port):
@@ -68,6 +83,8 @@ def ReadCommand(sock):
     # TODO: Implement ReadCommand Function
     #############################################
 
+    command_line = sock.recv(COMMAND_BUFFER_SIZE).decode() # ~~~adjust for commands bigger than buffer
+    return command_line
 
 def ParseCommand(command):
     """Parses a command and returns the command name, first arg, and remainder.
@@ -105,9 +122,14 @@ class KeyValueStore(object):
 
     def __init__(self):
         """Declares default, empty state."""
+
         ###########################################
         # TODO: Implement __init__ Function
         ###########################################
+
+        self.key_value_dict = {}
+        self.has_been_set = False
+        return
 
     def GetValue(self, key, max_age_in_sec=None):
         """Gets a cached value or `None`.
@@ -127,6 +149,14 @@ class KeyValueStore(object):
         # TODO: Implement GetValue Function
         ###########################################
 
+        if self.has_been_set == False:
+            return None
+        else:
+            if key in self.key_value_dict :
+                return key + ", " + self.key_value_dict[key]
+            else:
+                return None
+
     def StoreValue(self, key, value):
         """Stores a value under a specific key.
 
@@ -138,6 +168,12 @@ class KeyValueStore(object):
         ###########################################
         # TODO: Implement StoreValue Function
         ###########################################
+        if not(type(key) is None) and not(type(value) is None):
+            self.key_value_dict[key] = value  # test it, friend
+            self.has_been_set = True
+            return 0  # no issues
+        else:
+            return 1  # invalid parameters
 
     def Keys(self):
         """Returns a list of all keys in the datastore."""
@@ -146,7 +182,7 @@ class KeyValueStore(object):
         # TODO: Implement Keys Function
         ###########################################
 
-
+        return self.key_value_dict.keys()
 
 
 

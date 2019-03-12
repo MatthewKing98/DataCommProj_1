@@ -60,6 +60,12 @@ def PutCommand(name, text, database):
     # TODO: Implement PUT function
     ##########################################
 
+    status = database.StoreValue(name,text)
+    if status == 0:  # no issues
+        return "Value added"
+    else:
+        return ">>> Error: Invalid Parameters"
+
 
 def GetCommand(name, database):
     """Handle the GET command for a server.
@@ -78,6 +84,13 @@ def GetCommand(name, database):
     ##########################################
 
 
+    result = database.GetValue(name)
+    if type(result) is None:
+        return ">>> Error: Key not found"
+    else:
+        return result
+
+
 def DumpCommand(database):
     """Creates a function to handle the DUMP command for a server.
 
@@ -93,11 +106,31 @@ def DumpCommand(database):
     ##########################################
     # TODO: Implement DUMP function
     ##########################################
+    new_line_flag = False
+    result = ""
+    key_list = database.Keys()
+    print(key_list)
+    if len(key_list) > 0:
+        for key in key_list:
+            if(new_line_flag == True):
+                result = result + "\n"
+            else:
+                new_line_flag = True
+
+            result = result + database.GetValue(key)
+    else:
+        return ">>> Error: No valid keys in database"
+
+    print(result)
+
+    return result
 
 
 def SendText(sock, text):
     """Sends the result over the socket along with a newline."""
-    sock.send('%s\n' % text)
+    text = text + "\n"
+    #sock.send('%s\n' % text)
+    sock.send(text.encode())
 
 
 def main():
@@ -107,17 +140,22 @@ def main():
     # have permission to listen on the port, try a higher numbered port.
     server_sock = library.CreateServerSocket(LISTENING_PORT)
 
+    # Wait until a client connects and then get a socket that connects to the
+    # client.
+    client_sock, (address, port) = library.ConnectClientToServer(server_sock)
+    print('Received connection from %s:%d' % (address, port))
+
     # Handle commands indefinitely. Use ^C to exit the program.
     while True:
-        # Wait until a client connects and then get a socket that connects to the
-        # client.
-        client_sock, (address, port) = library.ConnectClientToServer(server_sock)
-        print('Received connection from %s:%d' % (address, port))
 
         # Read a command.
+        print("\ncatch\n")
         command_line = library.ReadCommand(client_sock)
+        print("release\n")
+        print('Client entered: ' + command_line)
         command, name, text = library.ParseCommand(command_line)
 
+        result = '> DEFAULT <'
         # Execute the command based on the first word in the command line.
         if command == 'PUT':
             result = PutCommand(name, text, database)
@@ -130,11 +168,12 @@ def main():
 
         SendText(client_sock, result)
 
-        # We're done with the client, so clean up the socket.
+    # We're done with the client, so clean up the socket.
 
-        #################################
-        # TODO: Close socket's connection
-        #################################
+    #################################
+    # TODO: Close socket's connection
+    #################################
 
+    client_sock.close()  # possibly closes connection
 
 main()
