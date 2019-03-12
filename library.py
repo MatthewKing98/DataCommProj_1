@@ -168,7 +168,7 @@ class KeyValueStore(object):
         ###########################################
         # TODO: Implement StoreValue Function
         ###########################################
-        if not(type(key) is None) and not(type(value) is None):
+        if not(key is None) and not(value is None):
             self.key_value_dict[key] = value  # test it, friend
             self.has_been_set = True
             return 0  # no issues
