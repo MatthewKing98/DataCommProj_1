@@ -1,6 +1,3 @@
-drive.web - frontend_20190228
-.00
-_p1
 """A proxy server that forwards requests from one port to another server.
 
 To run this using Python 2.7:
@@ -44,27 +41,14 @@ def ForwardCommandToServer(command, server_addr, server_port):
       A single line string response with no newlines.
     """
 
-    ###################################################
-    # TODO: Implement Function: WiP
-    ###################################################
+    transfer_socket = library.CreateClientSocket(server_addr, server_port)  # connect to actual server
+    transfer_socket.sendall(command.encode())  # transfer command to server
+    result = library.ReadCommand(transfer_socket)  # obtain response from server
+    transfer_socket.close()  # close server connection
+    return result
 
 
-def CheckCachedResponse(command_line, cache):
-    cmd, name, text = library.ParseCommand(command_line)
-
-    # Update the cache for PUT commands but also pass the traffic to the server.
-    ##########################
-    # TODO: Implement section
-    ##########################
-
-    # GET commands can be cached.
-
-    ############################
-    # TODO: Implement section
-    ############################
-
-
-def ProxyClientCommand(sock, server_addr, server_port, cache):
+def ProxyClientCommand(sock, server_addr, server_port, cache, max_age_in_sec):
     """Receives a command from a client and forwards it to a server:port.
 
     A single command is read from `sock`. That command is passed to the specified
@@ -80,27 +64,44 @@ def ProxyClientCommand(sock, server_addr, server_port, cache):
         the server.
     """
 
-    ###########################################
-    # TODO: Implement ProxyClientCommand
-    ###########################################
+    command_line = library.ReadCommand(sock)  # obtain command from user
+    command, _, _ = library.ParseCommand(command_line)
+    if command == "GET" or command == "get":  # if command involves cache
+        cached_result = cache.GetValue(command_line, max_age_in_sec)
+        if cached_result is not None:  # if command was previously utilized
+            print("Cache utilized")
+            result = cached_result
+        else:
+            result = ForwardCommandToServer(command_line, server_addr, server_port)
+            cache.StoreValue(command_line,result)  # cache result for future use
+    else:
+        result = ForwardCommandToServer(command_line,server_addr,server_port)
+
+    MirrorMessage(sock,result)  # output message to client
+
+
+def MirrorMessage(sock, text):
+    """Sends the result over the socket along with a newline."""
+    # sock.send('%s\n' % text)
+    sock.send(text.encode())
 
 
 def main():
     # Listen on a specified port...
     server_sock = library.CreateServerSocket(LISTENING_PORT)
     cache = library.KeyValueStore()
+
+    # Wait until a client connects and then get a socket that connects to the
+    # client.
+    client_sock, (address, port) = library.ConnectClientToServer(server_sock)
+    print('Received connection from %s:%d' % (address, port))
+
     # Accept incoming commands indefinitely.
     while True:
-        # Wait until a client connects and then get a socket that connects to the
-        # client.
-        client_sock, (address, port) = library.ConnectClientToServer(server_sock)
-        print('Received connection from %s:%d' % (address, port))
         ProxyClientCommand(client_sock, SERVER_ADDRESS, SERVER_PORT,
-                           cache)
+                           cache, 60)
 
-    #################################
-    # TODO: Close socket's connection
-    #################################
+    client_sock.close()
 
 
 main()

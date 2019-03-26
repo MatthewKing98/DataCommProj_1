@@ -36,10 +36,6 @@ def CreateServerSocket(port):
       An socket that implements TCP/IP.
     """
 
-    #############################################
-    # TODO: Implement CreateServerSocket Function
-    #############################################
-
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_sock.bind((HOST,port))
     return server_sock
@@ -59,11 +55,6 @@ def ConnectClientToServer(server_sock):
     # Wait until a client connects and then get a socket that connects to the
     # client.
 
-
-    #############################################
-    # TODO: Implement CreateClientSocket Function
-    #############################################
-
     server_sock.listen()
     return server_sock.accept()
 
@@ -71,17 +62,13 @@ def ConnectClientToServer(server_sock):
 def CreateClientSocket(server_addr, port):
     """Creates a socket that connects to a port on a server."""
 
-    #############################################
-    # TODO: Implement CreateClientSocket Function
-    #############################################
+    transfer_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    transfer_socket.connect((server_addr, port))
+    return transfer_socket
 
 
 def ReadCommand(sock):
     """Read a single command from a socket. The command must end in newline."""
-
-    #############################################
-    # TODO: Implement ReadCommand Function
-    #############################################
 
     command_line = sock.recv(COMMAND_BUFFER_SIZE).decode() # ~~~adjust for commands bigger than buffer
     return command_line
@@ -100,6 +87,7 @@ def ParseCommand(command):
     Returns:
       command, arg1, remainder. Each of these can be None.
     """
+
     args = command.strip().split(' ')
     command = None
     if args:
@@ -112,6 +100,15 @@ def ParseCommand(command):
         remainder = ' '.join(args[2:])
     return command, arg1, remainder
 
+class ValTimeStore(object):
+    """A value-timestamp tuple."""
+
+    def __init__(self,value):
+        """Declares default, timestamped item"""
+        self.value = value;
+        self.timestamp = time.time();
+        return
+
 
 class KeyValueStore(object):
     """A dictionary of strings keyed by strings.
@@ -122,10 +119,6 @@ class KeyValueStore(object):
 
     def __init__(self):
         """Declares default, empty state."""
-
-        ###########################################
-        # TODO: Implement __init__ Function
-        ###########################################
 
         self.key_value_dict = {}
         self.has_been_set = False
@@ -144,18 +137,24 @@ class KeyValueStore(object):
           None or the value.
         """
         # Check if we've ever put something in the cache.
-
-        ###########################################
-        # TODO: Implement GetValue Function
-        ###########################################
-
-        if self.has_been_set == False:
-            return None
-        else:
-            if key in self.key_value_dict :
-                return key + ", " + self.key_value_dict[key]
+        if self.has_been_set:
+            if max_age_in_sec is None:
+                if key in self.key_value_dict :
+                    return (self.key_value_dict[key]).value
+                else:
+                    return None
             else:
-                return None
+                cur_time = time.time()
+                if key in self.key_value_dict.keys():
+                    candidate_pair = self.key_value_dict[key]
+                    if (cur_time - candidate_pair.timestamp) <= max_age_in_sec:
+                        return (self.key_value_dict[key]).value
+                    else:
+                        return None
+                else:
+                    return None
+        else:
+            return None
 
     def StoreValue(self, key, value):
         """Stores a value under a specific key.
@@ -164,12 +163,8 @@ class KeyValueStore(object):
           key: string. The name of the value to store.
           value: string. A value to store.
         """
-
-        ###########################################
-        # TODO: Implement StoreValue Function
-        ###########################################
         if not(key is None) and not(value is None):
-            self.key_value_dict[key] = value  # test it, friend
+            self.key_value_dict[key] = ValTimeStore(value)
             self.has_been_set = True
             return 0  # no issues
         else:
@@ -177,10 +172,6 @@ class KeyValueStore(object):
 
     def Keys(self):
         """Returns a list of all keys in the datastore."""
-
-        ###########################################
-        # TODO: Implement Keys Function
-        ###########################################
 
         return self.key_value_dict.keys()
 
